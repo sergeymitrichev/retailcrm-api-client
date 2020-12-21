@@ -5,12 +5,24 @@
  * For more details take a look at the 'Building Java & JVM projects' chapter in the Gradle
  * User Manual available at https://docs.gradle.org/6.7/userguide/building_java_projects.html
  */
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.+'
+    }
+}
 
 plugins {
     // Apply the java-library plugin for API and implementation separation.
     id 'java-library'
     id 'maven-publish'
+    id 'com.jfrog.bintray' version "1.8.4"
 }
+
+group 'com.github.sergeymitrichev'
+version '1.0.0'
 
 repositories {
     // Use JCenter for resolving dependencies.
@@ -40,21 +52,49 @@ test {
     useJUnitPlatform()
 }
 
-publishing {
-    publications {
-        maven(MavenPublication) {
-            groupId = 'com.github.sergeymitrichev'
-            artifactId = 'retailcrm-api-client'
-            version = '1.0.0'
+bintray {
 
-            from components.java
+    user = 'sergeymitrichev'
+    key = '3ea2d1efcc50480d80cce6850c7dff12bddb32f8'
+    publications = ['mavenJava']
+
+    pkg {
+        repo = 'sergeymitrichev'
+        name = 'retailcrm-api-client'
+        licenses = ['Apache-2.0']
+        vcsUrl = 'https://github.com/sergeymitrichev/retailcrm-api-client'
+        version {
+            name = project.version
+            released = new Date()
+            vcsTag = "v${project.version}"
         }
     }
+}
 
-    repositories {
-        maven {
-            name = 'retailCrmApiClient'
-            url = "file://${buildDir}/repo"
+task sourcesJar(type: Jar, dependsOn: project.classes) {
+    from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar, dependsOn: project.javadoc) {
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives sourcesJar, javadocJar
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId 'retailcrm-api-client'
+            from components.java
+
+            artifact sourcesJar {
+                classifier = 'sources'
+            }
+            artifact javadocJar {
+                classifier = 'javadoc'
+            }
         }
     }
 }
